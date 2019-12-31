@@ -49,6 +49,10 @@
 // Initial is stop
 // STOP => RUN => STOP (via timeout)
 
+var moment = require('moment');
+var momentDurationFormatSetup = require("moment-duration-format");
+momentDurationFormatSetup(moment);
+
 module.exports = function(RED) {
     "use strict";
 
@@ -63,6 +67,8 @@ module.exports = function(RED) {
       node-input-repeat
       node-input-again
       node-input-atStart
+      node-input-publishEvery
+      node-input-publishFormat
     */
     var countdownNode = function(n) {
         // Local variables
@@ -115,6 +121,8 @@ module.exports = function(RED) {
         node.repeat    = n.repeat;             // node-input-repeat     - Repeat message every second
         node.again     = n.again;              // node-input-again      - Auto restart when timed out
         node.atStart   = n.atStart;            // node-input-atStart    - Run at start
+        node.durationEval = n.durationEval;
+        node.rateLimit = n.rateLimit;
 
         //
         function ndebug(s){
@@ -294,6 +302,12 @@ module.exports = function(RED) {
             ticks = -1;
         }
 
+        function formatTicks(t)
+        {
+           var duration = moment().duration(t, 'seconds');
+           var evalOut = eval(node.durationEval);
+            return evalOut;
+        }
         // @TODO: This should return the original msg with as few changes as possible
         function newMsg(msg) {
             // Pretty much a deep clone but I don't think it
@@ -391,8 +405,13 @@ module.exports = function(RED) {
                         }
                     } // warn if there's a warn message
 
-                    var tremain = { "payload": ticks, "state": 2, "flag": "warn >= ticks"};
-                    node.send([null, tremain]);
+                    var payloadFormatted = formatTicks(ticks);
+                    var tremain = { "payload": payloadFormatted, "state": 2, "flag": "warn >= ticks"};
+                    if((ticks % node.rateLimit) == 0)
+                    {
+                        node.send([null, tremain]);
+                    }
+                    
                 } else {
                     // HOW does this get sent out?
                     node.status({
@@ -400,9 +419,14 @@ module.exports = function(RED) {
                         shape : "dot",
                         text  : "Running: " + ticks // provide a visual countdown
                     });
-
-                    var tremain = { "payload": ticks, "state": 1, "flag": "ticks > 0"};
-                    node.send([null, tremain]);
+                    
+                    var payloadFormatted = formatTicks(ticks);
+                    var tremain = { "payload": payloadFormatted, "state": 1, "flag": "ticks > 0"};
+                    
+                    if((ticks % node.rateLimit) == 0)
+                    {
+                        node.send([null, tremain]);
+                    }
                 }
                 ticks--;
             } else if(ticks == 0) {
