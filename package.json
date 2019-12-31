@@ -20,7 +20,7 @@
   "author": "Neil Cherry",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/linuxha/node-red-contrib-mytimeout/issues"
+    "url": "https://github.com/flamingm0e/node-red-contrib-mytimeout/issues"
   },
   "node-red": {
     "nodes": {
