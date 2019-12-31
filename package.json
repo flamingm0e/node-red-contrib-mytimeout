@@ -12,7 +12,7 @@
   "dependencies":{
     "moment": "^2.13.0",
     "moment-duration-format": "^2.3.2"
-  }
+  },
   "keywords": [
     "node-red",
     "count down timer",
